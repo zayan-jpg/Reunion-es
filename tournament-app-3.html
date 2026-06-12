@@ -1,0 +1,1084 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Arena Pass</title>
+<style>
+  :root {
+    --radius: 16px;
+  }
+  .theme-arena {
+    --bg: #0F1115; --panel: #1A1D24; --panel2: #22262F; --border: #2E333D;
+    --text: #F5F5F0; --sub: #9CA3AF; --accent: #E8B339; --accent-text: #0F1115;
+    --open: #3DDC84; --closed: #FF6B6B;
+  }
+  .theme-pulse {
+    --bg: #0B1220; --panel: #121B2E; --panel2: #17233A; --border: #233149;
+    --text: #EAF2FF; --sub: #7E93B6; --accent: #38BDF8; --accent-text: #0B1220;
+    --open: #3DDC84; --closed: #FF6B6B;
+  }
+  .theme-classic {
+    --bg: #F4F1EA; --panel: #FFFFFF; --panel2: #F0EBE0; --border: #E2DACB;
+    --text: #241F1A; --sub: #7A6F5F; --accent: #8B2635; --accent-text: #FFFFFF;
+    --open: #1F8A4C; --closed: #C0392B;
+  }
+
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--bg); color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    min-height: 100vh;
+    transition: background .25s, color .25s;
+  }
+  #app { max-width: 720px; margin: 0 auto; padding: 0 16px 60px; }
+  a { color: inherit; text-decoration: none; }
+
+  .hdr { display: flex; align-items: center; justify-content: space-between; padding: 28px 0 20px; }
+  .brand { display: flex; align-items: center; gap: 12px; }
+  .brand-icon {
+    width: 44px; height: 44px; border-radius: 12px; background: var(--accent); color: var(--accent-text);
+    display: flex; align-items: center; justify-content: center; font-size: 22px; flex-shrink: 0;
+  }
+  .brand h1 { margin: 0; font-size: 19px; font-weight: 800; letter-spacing: .02em; text-transform: uppercase; }
+  .brand p { margin: 2px 0 0; font-size: 12px; color: var(--sub); }
+
+  .icon-btn {
+    width: 38px; height: 38px; border-radius: 10px; border: 1px solid var(--border);
+    background: transparent; color: var(--sub); display: flex; align-items: center; justify-content: center;
+    font-size: 16px; cursor: pointer;
+  }
+  .icon-btn:active { transform: scale(0.95); }
+
+  /* Cards */
+  .grid { display: grid; gap: 16px; }
+  @media (min-width: 560px) { .grid.layout-grid { grid-template-columns: 1fr 1fr; } }
+  .grid.layout-list { display: flex; flex-direction: column; gap: 14px; }
+
+  .card {
+    background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius);
+    overflow: hidden; cursor: pointer; transition: transform .15s;
+  }
+  .card:active { transform: translateY(1px); }
+  .card-img {
+    height: 140px; width: 100%; background: var(--panel2); display: flex; align-items: center; justify-content: center;
+    font-size: 38px; color: var(--sub); overflow: hidden;
+  }
+  .card-img img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .card-body { padding: 14px; }
+  .card-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; margin-bottom: 6px; }
+  .card-title { font-weight: 800; font-size: 16px; margin: 0; line-height: 1.25; }
+  .card-sub { font-size: 12px; color: var(--accent); margin: 0 0 10px; font-weight: 600; }
+  .card-meta { display: flex; align-items: center; gap: 14px; font-size: 12px; color: var(--sub); }
+  .card-meta b { color: var(--text); font-weight: 700; }
+
+  .badge {
+    font-size: 10.5px; font-weight: 800; text-transform: uppercase; letter-spacing: .04em;
+    padding: 4px 10px; border-radius: 999px; white-space: nowrap; flex-shrink: 0;
+  }
+  .badge.open { background: color-mix(in srgb, var(--open) 18%, transparent); color: var(--open); border: 1px solid color-mix(in srgb, var(--open) 40%, transparent); }
+  .badge.closed { background: color-mix(in srgb, var(--closed) 18%, transparent); color: var(--closed); border: 1px solid color-mix(in srgb, var(--closed) 40%, transparent); }
+
+  .empty {
+    border: 2px dashed var(--border); border-radius: var(--radius); padding: 60px 20px; text-align: center; color: var(--sub);
+  }
+  .empty .emoji { font-size: 30px; margin-bottom: 10px; }
+
+  /* Back link */
+  .back-link {
+    display: inline-flex; align-items: center; gap: 6px; color: var(--sub); font-weight: 700; font-size: 14px;
+    padding: 22px 0 14px; cursor: pointer; border: none; background: none;
+  }
+
+  /* Detail */
+  .detail-card { background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+  .detail-img { height: 200px; background: var(--panel2); display: flex; align-items: center; justify-content: center; font-size: 56px; color: var(--sub); overflow: hidden; }
+  .detail-img img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .detail-body { padding: 20px; }
+  .detail-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; margin-bottom: 2px; }
+  .detail-title { font-size: 24px; font-weight: 800; margin: 0; }
+  .detail-sub { font-size: 13px; font-weight: 700; color: var(--accent); margin: 4px 0 16px; }
+  .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+  .stat { background: var(--panel2); border-radius: 12px; padding: 12px; }
+  .stat .label { font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: var(--sub); margin: 0 0 4px; }
+  .stat .value { font-weight: 800; font-size: 15px; margin: 0; }
+  .desc { font-size: 14px; line-height: 1.6; color: var(--sub); margin: 0 0 20px; white-space: pre-wrap; }
+
+  .ticket {
+    border: 2px dashed var(--accent); background: color-mix(in srgb, var(--accent) 8%, transparent);
+    border-radius: 14px; padding: 16px; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+  }
+  .ticket .label { font-size: 11px; text-transform: uppercase; letter-spacing: .05em; color: var(--accent); font-weight: 800; margin: 0; }
+  .ticket .num { font-size: 18px; font-weight: 800; margin: 4px 0 0; }
+  .ticket .note { font-size: 13px; color: var(--sub); font-weight: 600; }
+  .ticket-actions { display: flex; flex-direction: column; gap: 8px; }
+  .btn {
+    border: none; border-radius: 10px; font-weight: 800; font-size: 13px; padding: 9px 14px;
+    cursor: pointer; display: inline-flex; align-items: center; gap: 6px; justify-content: center;
+  }
+  .btn-accent { background: var(--accent); color: var(--accent-text); }
+  .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text); }
+  .btn-danger { background: color-mix(in srgb, var(--closed) 18%, transparent); color: var(--closed); }
+  .btn-block { width: 100%; padding: 13px; font-size: 13px; text-transform: uppercase; letter-spacing: .04em; border-radius: 12px; }
+  .btn:active { transform: scale(0.98); }
+
+  /* Login */
+  .login-wrap { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 16px; }
+  .login-card { width: 100%; max-width: 360px; background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius); padding: 26px; }
+  .login-icon { width: 52px; height: 52px; border-radius: 14px; background: var(--accent); color: var(--accent-text); display: flex; align-items: center; justify-content: center; font-size: 26px; margin: 0 auto 14px; }
+  .login-card h2 { text-align: center; margin: 0 0 4px; font-size: 17px; font-weight: 800; text-transform: uppercase; letter-spacing: .03em; }
+  .login-card .hint { text-align: center; font-size: 12px; color: var(--sub); margin: 0 0 18px; }
+
+  /* Form */
+  .field { margin-bottom: 14px; }
+  .field label { display: block; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: .04em; color: var(--sub); margin-bottom: 6px; }
+  .input, textarea.input {
+    width: 100%; background: var(--panel2); border: 1px solid var(--border); border-radius: 10px;
+    padding: 11px 12px; font-size: 14px; color: var(--text); font-family: inherit; outline: none;
+  }
+  .input:focus, textarea.input:focus { border-color: var(--accent); }
+  textarea.input { resize: vertical; min-height: 80px; }
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .pw-wrap { position: relative; }
+  .pw-wrap .input { padding-right: 40px; }
+  .pw-toggle { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--sub); cursor: pointer; font-size: 15px; }
+  .error-text { color: var(--closed); font-size: 12px; font-weight: 700; margin: 8px 0 0; }
+  .ok-text { color: var(--open); font-size: 12px; font-weight: 700; margin: 8px 0 0; }
+
+  /* Admin */
+  .admin-hdr { display: flex; align-items: center; justify-content: space-between; padding: 28px 0 16px; gap: 8px; flex-wrap: wrap; }
+  .admin-hdr .eyebrow { font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: .06em; color: var(--accent); margin: 0; }
+  .admin-hdr h1 { margin: 2px 0 0; font-size: 19px; font-weight: 800; }
+  .admin-actions { display: flex; gap: 8px; }
+
+  .tabs { display: flex; gap: 8px; margin-bottom: 18px; }
+  .tab {
+    display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 800; padding: 9px 14px;
+    border-radius: 10px; border: 1px solid var(--border); background: transparent; color: var(--sub); cursor: pointer;
+  }
+  .tab.active { background: var(--accent); color: var(--accent-text); border-color: var(--accent); }
+
+  .add-btn {
+    width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;
+    border: 2px dashed var(--accent); color: var(--accent); border-radius: 14px; padding: 14px; font-weight: 800;
+    font-size: 14px; background: transparent; cursor: pointer; margin-bottom: 16px;
+  }
+
+  .admin-row { display: flex; align-items: center; gap: 12px; background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 10px; margin-bottom: 10px; }
+  .admin-row .thumb { width: 52px; height: 52px; border-radius: 10px; background: var(--panel2); flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 20px; overflow: hidden; }
+  .admin-row .thumb img { width: 100%; height: 100%; object-fit: cover; }
+  .admin-row .info { flex: 1; min-width: 0; }
+  .admin-row .info .t { font-weight: 800; font-size: 14px; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .admin-row .info .s { font-size: 12px; color: var(--sub); margin: 2px 0 0; }
+  .admin-row .actions { display: flex; gap: 6px; flex-shrink: 0; }
+  .sq-btn { width: 34px; height: 34px; border-radius: 9px; border: 1px solid var(--border); background: transparent; color: var(--text); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 14px; }
+  .sq-btn.danger { border: none; background: color-mix(in srgb, var(--closed) 18%, transparent); color: var(--closed); }
+
+  /* Settings sections */
+  .section { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 16px; margin-bottom: 16px; }
+  .section h3 { margin: 0 0 14px; font-size: 13px; font-weight: 800; text-transform: uppercase; letter-spacing: .04em; display: flex; align-items: center; gap: 8px; }
+
+  .theme-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+  .theme-opt {
+    border-radius: 12px; padding: 12px; text-align: left; cursor: pointer; border: 2px solid var(--border);
+  }
+  .theme-opt .dots { display: flex; gap: 4px; margin-bottom: 8px; }
+  .theme-opt .dot { width: 14px; height: 14px; border-radius: 50%; }
+  .theme-opt .name { font-size: 12px; font-weight: 800; }
+  .theme-opt .active-tag { font-size: 10px; font-weight: 800; margin-top: 2px; }
+
+  .format-row { display: flex; gap: 10px; }
+  .format-btn { flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: 800; font-size: 14px; padding: 12px; border-radius: 10px; border: 1px solid var(--border); background: transparent; color: var(--text); cursor: pointer; }
+  .format-btn.active { background: var(--accent); color: var(--accent-text); border-color: var(--accent); }
+
+  /* Toggle */
+  .toggle-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+  .toggle-row .t { font-weight: 800; font-size: 14px; margin: 0; }
+  .toggle-row .s { font-size: 12px; color: var(--sub); margin: 2px 0 0; }
+  .toggle {
+    width: 46px; height: 27px; border-radius: 999px; background: var(--border); position: relative; cursor: pointer; flex-shrink: 0; border: none; padding: 0;
+  }
+  .toggle.on { background: var(--accent); }
+  .toggle .knob { position: absolute; top: 3px; left: 3px; width: 21px; height: 21px; border-radius: 50%; background: #fff; transition: transform .15s; }
+  .toggle.on .knob { transform: translateX(19px); }
+
+  /* Image upload box */
+  .img-upload {
+    height: 140px; border: 2px dashed var(--border); border-radius: 14px; background: var(--panel2);
+    display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 6px; color: var(--sub);
+    position: relative; overflow: hidden; cursor: pointer; margin-bottom: 8px;
+  }
+  .img-upload img { width: 100%; height: 100%; object-fit: cover; position: absolute; inset: 0; }
+  .img-upload input[type=file] { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+  .img-upload .ph { font-size: 26px; }
+  .img-upload .ph-text { font-size: 12px; }
+
+  /* Registration form */
+  .reg-form { background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px; margin-top: 18px; }
+  .reg-form h3 { margin: 0 0 14px; font-size: 14px; font-weight: 800; text-transform: uppercase; letter-spacing: .04em; display: flex; align-items: center; gap: 8px; }
+  .player-row { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; }
+  .player-row .input { flex: 1; }
+  .player-row .sq-btn { flex-shrink: 0; }
+  .add-player-btn { background: transparent; border: 1px dashed var(--border); color: var(--sub); border-radius: 9px; padding: 8px 12px; font-size: 12px; font-weight: 700; cursor: pointer; width: 100%; margin-bottom: 14px; }
+  .add-player-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .reg-success { background: color-mix(in srgb, var(--open) 12%, transparent); border: 1px solid color-mix(in srgb, var(--open) 40%, transparent); border-radius: 12px; padding: 14px; text-align: center; color: var(--open); font-weight: 700; font-size: 14px; }
+
+  /* Admin registrations */
+  .reg-entry { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 14px; margin-bottom: 10px; }
+  .reg-entry .re-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
+  .reg-entry .re-team { font-weight: 800; font-size: 15px; margin: 0; }
+  .reg-entry .re-tour { font-size: 12px; color: var(--accent); font-weight: 700; margin: 2px 0 0; }
+  .reg-entry .re-meta { font-size: 12px; color: var(--sub); margin: 6px 0 0; display: flex; gap: 14px; flex-wrap: wrap; }
+  .reg-entry .re-players { margin: 8px 0 0; display: flex; flex-wrap: wrap; gap: 6px; }
+  .player-chip { background: var(--panel2); border: 1px solid var(--border); border-radius: 999px; padding: 3px 10px; font-size: 12px; font-weight: 600; }
+
+  /* Room ID reveal */
+  .room-card { background: var(--panel); border: 2px solid var(--accent); border-radius: var(--radius); padding: 18px; margin-top: 18px; }
+  .room-card .room-locked { text-align: center; padding: 10px 0; }
+  .room-card .room-locked .lock-icon { font-size: 36px; margin-bottom: 8px; }
+  .room-card .room-locked .lock-title { font-size: 15px; font-weight: 800; margin: 0 0 4px; }
+  .room-card .room-locked .lock-sub { font-size: 13px; color: var(--sub); margin: 0; }
+  .room-card .room-locked .countdown { font-size: 22px; font-weight: 800; color: var(--accent); margin: 10px 0 0; letter-spacing: .04em; }
+  .room-unlocked-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 12px 0; }
+  .room-val-box { background: var(--panel2); border: 1px solid var(--border); border-radius: 12px; padding: 12px; }
+  .room-val-box .rv-label { font-size: 10px; text-transform: uppercase; letter-spacing: .05em; color: var(--sub); font-weight: 800; margin: 0 0 4px; }
+  .room-val-box .rv-val { font-size: 20px; font-weight: 800; margin: 0; letter-spacing: .06em; color: var(--accent); }
+  .mode-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 14px; }
+  .mode-btn { border: 1px solid var(--border); background: var(--panel2); border-radius: 10px; padding: 10px 6px; text-align: center; cursor: pointer; font-size: 11px; font-weight: 800; color: var(--sub); }
+  .mode-btn.active { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 15%, transparent); color: var(--text); }
+  .mode-btn .mode-icon { font-size: 18px; display: block; margin-bottom: 4px; }
+  .room-admin-box { background: color-mix(in srgb, var(--accent) 8%, transparent); border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent); border-radius: 12px; padding: 14px; margin-top: 12px; }
+  .room-admin-box .ra-title { font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: .04em; color: var(--accent); margin: 0 0 10px; }
+  .room-admin-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; }
+</style>
+</head>
+<body class="theme-arena">
+<div id="app"></div>
+
+<script>
+(function () {
+  var THEMES = {
+    arena: { name: "Arena", swatch: ["#E8B339", "#22262F"] },
+    pulse: { name: "Pulse", swatch: ["#38BDF8", "#17233A"] },
+    classic: { name: "Classic", swatch: ["#8B2635", "#F0EBE0"] }
+  };
+
+  var DEFAULT_SETTINGS = {
+    password: "zayni_43",
+    theme: "arena",
+    layout: "grid",
+    appName: "REUNION ES",
+    tagline: "Tournaments. Entries. One pass."
+  };
+
+  var SAMPLE_TOURNAMENTS = [
+    {
+      id: "t1", title: "Friday Night Clash", game: "BGMI", format: "Squad · Battle Royale",
+      date: "2026-06-20", prize: "Rs 5,000", image: "",
+      description: "Weekly squad showdown. Top 3 squads split the prize pool. Bring your A-game.",
+      registrationOpen: true, entryNumber: "03278269343 (JazzCash)", matchTime: "20:00", mode: "4v4", roomId: "", roomPass: ""
+    },
+    {
+      id: "t2", title: "Valorant Showdown", game: "Valorant", format: "5v5 · Single Elimination",
+      date: "2026-07-02", prize: "Rs 10,000", image: "",
+      description: "Regional bracket, single elimination. Registration opens soon — stay tuned.",
+      registrationOpen: false, entryNumber: "", matchTime: "21:00", mode: "5v5", roomId: "", roomPass: ""
+    }
+  ];
+
+  // ---------- State ----------
+  var state = {
+    settings: JSON.parse(JSON.stringify(DEFAULT_SETTINGS)),
+    tournaments: JSON.parse(JSON.stringify(SAMPLE_TOURNAMENTS)),
+    view: "player",          // player | detail | adminLogin | admin
+    isAdmin: false,
+    activeId: null,
+    adminTab: "tournaments", // tournaments | settings
+    editing: null,           // tournament object being edited, or null
+    isNew: false,
+    loginError: "",
+    pwError: "",
+    pwOk: "",
+    showPw: false,
+    settingsSavedMsg: "",
+    registrations: [],
+    regSubmitted: false,
+    regError: ""
+  };
+
+  // ---------- Storage (best-effort, never blocks) ----------
+  function withTimeout(p, ms) {
+    return new Promise(function (resolve, reject) {
+      var t = setTimeout(function () { reject(new Error("timeout")); }, ms || 2500);
+      p.then(function (v) { clearTimeout(t); resolve(v); }, function (e) { clearTimeout(t); reject(e); });
+    });
+  }
+  function loadAll() {
+    try {
+      if (!window.storage) return;
+      withTimeout(window.storage.get("app-settings", true)).then(function (res) {
+        if (res && res.value) {
+          var parsed = JSON.parse(res.value);
+          state.settings = Object.assign({}, DEFAULT_SETTINGS, parsed);
+          render();
+        }
+      }).catch(function () {});
+      withTimeout(window.storage.get("tournaments-list", true)).then(function (res) {
+        if (res && res.value) {
+          var parsed = JSON.parse(res.value);
+          if (Array.isArray(parsed)) { state.tournaments = parsed; render(); }
+        }
+      }).catch(function () {});
+      withTimeout(window.storage.get("team-registrations", true)).then(function (res) {
+        if (res && res.value) {
+          var parsed = JSON.parse(res.value);
+          if (Array.isArray(parsed)) { state.registrations = parsed; render(); }
+        }
+      }).catch(function () {});
+    } catch (e) {}
+  }
+  function persistRegistrations() {
+    try {
+      if (window.storage) withTimeout(window.storage.set("team-registrations", JSON.stringify(state.registrations), true)).catch(function () {});
+    } catch (e) {}
+  }
+  function persistSettings() {
+    try {
+      if (window.storage) withTimeout(window.storage.set("app-settings", JSON.stringify(state.settings), true)).catch(function () {});
+    } catch (e) {}
+  }
+  function persistTournaments() {
+    try {
+      if (window.storage) withTimeout(window.storage.set("tournaments-list", JSON.stringify(state.tournaments), true)).catch(function () {});
+    } catch (e) {}
+  }
+
+  // ---------- Helpers ----------
+  function esc(s) {
+    if (s == null) return "";
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+    });
+  }
+  function uid() { return "t" + Math.random().toString(36).slice(2, 10); }
+  function formatDate(d) {
+    if (!d) return "TBA";
+    try {
+      var dt = new Date(d + "T00:00:00");
+      return dt.toLocaleDateString("en-US", { day: "numeric", month: "short", year: "numeric" });
+    } catch (e) { return d; }
+  }
+  function findTournament(id) {
+    for (var i = 0; i < state.tournaments.length; i++) if (state.tournaments[i].id === id) return state.tournaments[i];
+    return null;
+  }
+
+  // ---------- Render pieces ----------
+  function badge(open) {
+    return '<span class="badge ' + (open ? "open" : "closed") + '">' + (open ? "Registration Open" : "Closed") + "</span>";
+  }
+  function cardImg(image, emoji) {
+    if (image) return '<div class="card-img"><img src="' + esc(image) + '" /></div>';
+    return '<div class="card-img">' + emoji + "</div>";
+  }
+
+  function renderPlayer() {
+    var s = state.settings;
+    var html = '';
+    html += '<div class="hdr">';
+    html += '  <div class="brand">';
+    html += '    <div class="brand-icon">🏆</div>';
+    html += '    <div><h1>' + esc(s.appName) + '</h1><p>' + esc(s.tagline) + '</p></div>';
+    html += '  </div>';
+    html += '  <button class="icon-btn" data-action="open-admin-gate" aria-label="Admin access">🔒</button>';
+    html += '</div>';
+
+    if (state.tournaments.length === 0) {
+      html += '<div class="empty"><div class="emoji">🏆</div><p>No tournaments posted yet. Check back soon.</p></div>';
+    } else {
+      html += '<div class="grid layout-' + s.layout + '">';
+      state.tournaments.forEach(function (t) {
+        html += '<div class="card" data-action="open-tournament" data-id="' + t.id + '">';
+        html += cardImg(t.image, "🎮");
+        html += '<div class="card-body">';
+        html += '  <div class="card-top"><p class="card-title">' + esc(t.title) + '</p>' + badge(t.registrationOpen) + '</div>';
+        html += '  <p class="card-sub">' + esc(t.game) + ' · ' + esc(t.format) + (t.mode ? ' · ' + esc(t.mode) : '') + '</p>';
+        html += '  <div class="card-meta"><span>📅 ' + formatDate(t.date) + '</span>' + (t.prize ? '<b>' + esc(t.prize) + '</b>' : '') + '</div>';
+        html += '</div></div>';
+      });
+      html += '</div>';
+    }
+    return html;
+  }
+
+  function renderDetail() {
+    var t = findTournament(state.activeId);
+    if (!t) { state.view = "player"; return renderPlayer(); }
+    var html = '';
+    html += '<button class="back-link" data-action="back-to-player">⬅ Back</button>';
+    html += '<div class="detail-card">';
+    html += t.image ? '<div class="detail-img"><img src="' + esc(t.image) + '" /></div>' : '<div class="detail-img">🎮</div>';
+    html += '<div class="detail-body">';
+    html += '  <div class="detail-top"><h2 class="detail-title">' + esc(t.title) + '</h2>' + badge(t.registrationOpen) + '</div>';
+    html += '  <p class="detail-sub">' + esc(t.game) + ' · ' + esc(t.format) + '</p>';
+    html += '  <div class="stat-grid">';
+    html += '    <div class="stat"><p class="label">Date</p><p class="value">📅 ' + formatDate(t.date) + '</p></div>';
+    html += '    <div class="stat"><p class="label">Prize Pool</p><p class="value">' + (esc(t.prize) || "—") + '</p></div>';
+    html += '    <div class="stat"><p class="label">Mode</p><p class="value">🎮 ' + esc(t.mode || "—") + '</p></div>';
+    html += '    <div class="stat"><p class="label">Match Time</p><p class="value">🕐 ' + esc(t.matchTime ? formatTime12(t.matchTime) : "TBA") + '</p></div>';
+    html += '  </div>';
+    if (t.description) html += '  <p class="desc">' + esc(t.description) + '</p>';
+
+    if (t.registrationOpen) {
+      html += '  <div class="ticket">';
+      html += '    <div><p class="label">Entry Fee — Send via JazzCash</p><p class="num">' + (esc(t.entryNumber) || "Not provided") + '</p></div>';
+      if (t.entryNumber) {
+        var tel = t.entryNumber.replace(/[^0-9+]/g, "");
+        if (tel.indexOf("0") === 0) tel = "+92" + tel.slice(1);
+        html += '    <div class="ticket-actions">';
+        html += '      <a class="btn btn-accent" href="tel:' + esc(tel) + '">📞 Call</a>';
+        html += '      <button class="btn btn-outline" data-action="copy-number" data-num="' + esc(t.entryNumber) + '">📋 Copy</button>';
+        html += '    </div>';
+      }
+      html += '  </div>';
+    } else {
+      html += '  <div class="ticket"><p class="note">Registration isn’t open yet. Check back soon for the entry number.</p></div>';
+    }
+    html += '</div></div>';
+    html += renderRegForm(t);
+    html += renderRoomCard(t);
+    return html;
+  }
+
+  function formatTime12(t24) {
+    if (!t24) return "";
+    var parts = t24.split(":"); var h = parseInt(parts[0], 10); var m = parts[1] || "00";
+    var ampm = h >= 12 ? "PM" : "AM"; h = h % 12 || 12;
+    return h + ":" + m + " " + ampm;
+  }
+
+  function renderRoomCard(t) {
+    // Only show if admin has set room credentials
+    if (!t.roomId && !t.roomPass) return "";
+
+    var html = '<div class="room-card">';
+    html += '<p style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--accent);margin:0 0 10px;">🔑 Room Access</p>';
+
+    // Check if match time has arrived
+    var unlocked = false;
+    if (t.matchTime && t.date) {
+      var matchDT = new Date(t.date + "T" + t.matchTime + ":00");
+      unlocked = new Date() >= matchDT;
+    } else if (t.matchTime) {
+      // No date — compare time-of-day only (same day)
+      var now = new Date();
+      var parts = t.matchTime.split(":"); var mh = parseInt(parts[0],10); var mm = parseInt(parts[1]||"0",10);
+      var matchToday = new Date(); matchToday.setHours(mh, mm, 0, 0);
+      unlocked = now >= matchToday;
+    }
+
+    if (unlocked) {
+      html += '<p style="font-size:13px;color:var(--open);font-weight:700;margin:0 0 10px;">✅ Match time reached — Room is live!</p>';
+      html += '<div class="room-unlocked-grid">';
+      html += '  <div class="room-val-box"><p class="rv-label">Room ID</p><p class="rv-val">' + esc(t.roomId || "—") + '</p></div>';
+      html += '  <div class="room-val-box"><p class="rv-label">Password</p><p class="rv-val">' + esc(t.roomPass || "—") + '</p></div>';
+      html += '</div>';
+      html += '<div style="display:flex;gap:8px;">';
+      html += '  <button class="btn btn-outline" style="flex:1;" data-action="copy-room" data-roomid="' + esc(t.roomId) + '" data-roompass="' + esc(t.roomPass) + '">📋 Copy Room Info</button>';
+      html += '</div>';
+    } else {
+      html += '<div class="room-locked">';
+      html += '  <div class="lock-icon">🔒</div>';
+      html += '  <p class="lock-title">Room Locked</p>';
+      html += '  <p class="lock-sub">Room ID & Password will unlock at match time</p>';
+      if (t.matchTime) {
+        html += '  <p class="countdown" id="room-countdown-' + esc(t.id) + '">⏳ Loading...</p>';
+      }
+      html += '</div>';
+    }
+    html += '</div>';
+
+    // If countdown needed, inject live JS timer
+    if (!unlocked && t.matchTime) {
+      var matchDTStr = t.date ? (t.date + "T" + t.matchTime + ":00") : "";
+      html += '<script>(function(){';
+      html += 'var el=document.getElementById("room-countdown-' + t.id + '");';
+      html += 'if(!el)return;';
+      if (matchDTStr) {
+        html += 'var target=new Date("' + matchDTStr + '").getTime();';
+      } else {
+        // Time-only: use today
+        var tp = t.matchTime.split(':');
+        html += 'var now=new Date();var target=new Date();target.setHours(' + parseInt(tp[0],10) + ',' + parseInt(tp[1]||0,10) + ',0,0);target=target.getTime();';
+      }
+      html += 'function tick(){var diff=target-Date.now();if(diff<=0){el.textContent="🟢 Room is now open! Refresh to see it.";return;}';
+      html += 'var h=Math.floor(diff/3600000);var m=Math.floor((diff%3600000)/60000);var s=Math.floor((diff%60000)/1000);';
+      html += 'el.textContent="⏳ Unlocks in "+(h?""+h+"h ":"")+(m?""+m+"m ":"")+""+s+"s";}';
+      html += 'tick();var iv=setInterval(tick,1000);';
+      html += '})();<\/script>';
+    }
+    return html;
+  }
+
+  function renderRegForm(t) {
+    var html = '';
+    html += '<div class="reg-form">';
+    html += '<h3>📋 Register Your Team</h3>';
+
+    if (state.regSubmitted) {
+      html += '<div class="reg-success">✅ Team registered successfully! We\'ll see you in the tournament.</div>';
+      html += '<button class="btn btn-outline" style="width:100%;margin-top:12px;" data-action="reg-new">Register Another Team</button>';
+      html += '</div>';
+      return html;
+    }
+
+    // Mode hint
+    var modeHints = { "1v1": 1, "2v2": 2, "4v4": 4, "5v5": 5, "squad": 4, "solo": 1 };
+    var suggestedCount = modeHints[t.mode] || 1;
+    if (t.mode) {
+      html += '<div style="background:color-mix(in srgb,var(--accent) 10%,transparent);border:1px solid color-mix(in srgb,var(--accent) 30%,transparent);border-radius:10px;padding:10px 12px;margin-bottom:14px;font-size:13px;font-weight:700;color:var(--accent);">🎮 ' + esc(t.mode) + ' mode — add ' + suggestedCount + ' player' + (suggestedCount > 1 ? 's' : '') + '</div>';
+    }
+
+    html += '<div class="field"><label>Team Name</label><input class="input" id="reg-team" placeholder="e.g. Alpha Squad" /></div>';
+
+    html += '<div class="field"><label>Player Names</label>';
+    var playerCount = state.regPlayerCount || 1;
+    for (var i = 0; i < playerCount; i++) {
+      html += '<div class="player-row">';
+      html += '  <input class="input" id="reg-player-' + i + '" placeholder="Player ' + (i + 1) + ' name" />';
+      if (i > 0) {
+        html += '  <button class="sq-btn danger" data-action="remove-player" data-idx="' + i + '" type="button">✕</button>';
+      }
+      html += '</div>';
+    }
+    html += '</div>';
+    html += '<button class="add-player-btn" data-action="add-player" type="button">+ Add Player</button>';
+
+    html += '<div class="field"><label>Preferred Match Time</label><input class="input" id="reg-time" type="time" /></div>';
+
+    if (state.regError) html += '<p class="error-text">' + esc(state.regError) + '</p>';
+
+    html += '<button class="btn btn-accent btn-block" data-action="submit-reg" data-tid="' + esc(t.id) + '">Submit Registration</button>';
+    html += '</div>';
+    return html;
+  }
+
+  function submitRegistration(tournamentId) {
+    var team = (document.getElementById("reg-team") || {}).value || "";
+    var time = (document.getElementById("reg-time") || {}).value || "";
+    if (!team.trim()) { state.regError = "Please enter your team name."; render(); return; }
+    var players = [];
+    var count = state.regPlayerCount || 1;
+    for (var i = 0; i < count; i++) {
+      var val = ((document.getElementById("reg-player-" + i) || {}).value || "").trim();
+      if (val) players.push(val);
+    }
+    if (players.length === 0) { state.regError = "Please enter at least one player name."; render(); return; }
+    var reg = {
+      id: uid(),
+      tournamentId: tournamentId,
+      teamName: team.trim(),
+      players: players,
+      time: time,
+      submittedAt: new Date().toISOString()
+    };
+    state.registrations.push(reg);
+    persistRegistrations();
+    state.regSubmitted = true;
+    state.regError = "";
+    render();
+  }
+
+  function renderAdminGateRedirect() {
+    if (state.isAdmin) { state.view = "admin"; return renderAdmin(); }
+    state.view = "adminLogin"; return renderAdminLogin();
+  }
+
+  function renderAdminLogin() {
+    var html = '';
+    html += '<div class="login-wrap">';
+    html += '  <div style="width:100%;max-width:360px;">';
+    html += '  <button class="back-link" data-action="back-to-player" style="padding-top:0;">⬅ Back</button>';
+    html += '  <div class="login-card">';
+    html += '    <div class="login-icon">🛡️</div>';
+    html += '    <h2>Admin Access</h2>';
+    html += '    <p class="hint">Enter the admin password to continue</p>';
+    html += '    <div class="field" style="margin-bottom:6px;">';
+    html += '      <div class="pw-wrap">';
+    html += '        <input class="input" id="pw-input" type="' + (state.showPw ? "text" : "password") + '" placeholder="Password" autocomplete="off" />';
+    html += '        <button class="pw-toggle" data-action="toggle-pw" type="button">' + (state.showPw ? "🙈" : "👁") + '</button>';
+    html += '      </div>';
+    html += '    </div>';
+    if (state.loginError) html += '    <p class="error-text">' + esc(state.loginError) + '</p>';
+    html += '    <button class="btn btn-accent btn-block" data-action="submit-login" style="margin-top:10px;">Log In</button>';
+    html += '  </div></div>';
+    html += '</div>';
+    return html;
+  }
+
+  function renderAdmin() {
+    var s = state.settings;
+    var html = '';
+    html += '<div class="admin-hdr">';
+    html += '  <div><p class="eyebrow">Admin</p><h1>' + esc(s.appName) + ' Manager</h1></div>';
+    html += '  <div class="admin-actions">';
+    html += '    <button class="btn btn-outline" data-action="view-app">View App</button>';
+    html += '    <button class="btn btn-danger" data-action="logout">⎋ Log Out</button>';
+    html += '  </div>';
+    html += '</div>';
+
+    html += '<div class="tabs">';
+    html += '  <button class="tab ' + (state.adminTab === "tournaments" ? "active" : "") + '" data-action="set-tab" data-tab="tournaments">🏆 Tournaments</button>';
+    html += '  <button class="tab ' + (state.adminTab === "registrations" ? "active" : "") + '" data-action="set-tab" data-tab="registrations">📋 Registrations</button>';
+    html += '  <button class="tab ' + (state.adminTab === "settings" ? "active" : "") + '" data-action="set-tab" data-tab="settings">⚙️ App Settings</button>';
+    html += '</div>';
+
+    if (state.adminTab === "tournaments") {
+      html += '<button class="add-btn" data-action="add-tournament">➕ Add Tournament Poster</button>';
+      if (state.tournaments.length === 0) {
+        html += '<div class="empty"><div class="emoji">🏆</div><p>No tournaments yet. Add your first one above.</p></div>';
+      } else {
+        state.tournaments.forEach(function (t) {
+          html += '<div class="admin-row">';
+          html += '  <div class="thumb">' + (t.image ? '<img src="' + esc(t.image) + '" />' : '🎮') + '</div>';
+          html += '  <div class="info"><p class="t">' + esc(t.title || "Untitled") + '</p><p class="s">' + esc(t.game) + ' · ' + formatDate(t.date) + '</p></div>';
+          html += '  ' + badge(t.registrationOpen);
+          html += '  <div class="actions">';
+          html += '    <button class="sq-btn" data-action="edit-tournament" data-id="' + t.id + '">✏️</button>';
+          html += '    <button class="sq-btn danger" data-action="delete-tournament" data-id="' + t.id + '">🗑️</button>';
+          html += '  </div>';
+          html += '</div>';
+        });
+      }
+    } else if (state.adminTab === "registrations") {
+      html += renderRegistrationsPanel();
+    } else {
+      html += renderSettingsPanel();
+    }
+    return html;
+  }
+
+  function renderRegistrationsPanel() {
+    var html = '';
+    if (state.registrations.length === 0) {
+      html += '<div class="empty"><div class="emoji">📋</div><p>No team registrations yet.</p></div>';
+      return html;
+    }
+    // Group by tournament
+    var byTour = {};
+    state.registrations.forEach(function (r) { (byTour[r.tournamentId] = byTour[r.tournamentId] || []).push(r); });
+    Object.keys(byTour).forEach(function (tid) {
+      var tour = findTournament(tid);
+      var tourName = tour ? tour.title : "Unknown Tournament";
+      html += '<p style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--accent);margin:0 0 10px;">' + esc(tourName) + ' — ' + byTour[tid].length + ' team(s)' + (tour && tour.roomId ? ' · 🔑 Room Set' : ' · ⚠️ No Room ID yet') + '</p>';
+      byTour[tid].forEach(function (r) {
+        var dt = r.submittedAt ? new Date(r.submittedAt).toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short" }) : "—";
+        html += '<div class="reg-entry">';
+        html += '  <div class="re-head"><div><p class="re-team">🛡 ' + esc(r.teamName) + '</p></div>';
+        html += '  <button class="sq-btn danger" data-action="delete-reg" data-rid="' + esc(r.id) + '" title="Remove">🗑️</button></div>';
+        html += '  <div class="re-players">';
+        r.players.forEach(function (p) { html += '<span class="player-chip">👤 ' + esc(p) + '</span>'; });
+        html += '  </div>';
+        html += '  <div class="re-meta">';
+        if (r.time) html += '<span>🕐 Preferred time: ' + esc(r.time) + '</span>';
+        html += '<span>📅 ' + esc(dt) + '</span>';
+        html += '  </div>';
+        html += '</div>';
+      });
+    });
+    return html;
+  }
+
+  function renderSettingsPanel() {
+    var s = state.settings;
+    var html = '';
+
+    // App identity
+    html += '<div class="section"><h3>🎨 App Identity</h3>';
+    html += '  <div class="field"><label>App Name</label><input class="input" id="set-appname" value="' + esc(s.appName) + '" /></div>';
+    html += '  <div class="field"><label>Tagline</label><input class="input" id="set-tagline" value="' + esc(s.tagline) + '" /></div>';
+    html += '  <button class="btn btn-accent" data-action="save-general">Save</button>';
+    if (state.settingsSavedMsg) html += '  <p class="ok-text">' + esc(state.settingsSavedMsg) + '</p>';
+    html += '</div>';
+
+    // Theme
+    html += '<div class="section"><h3>🎨 Theme</h3><div class="theme-grid">';
+    Object.keys(THEMES).forEach(function (key) {
+      var th = THEMES[key];
+      var active = s.theme === key;
+      html += '<div class="theme-opt" data-action="set-theme" data-theme="' + key + '" style="border-color:' + (active ? th.swatch[0] : "var(--border)") + ';background:' + (key === "classic" ? "#F4F1EA" : key === "pulse" ? "#0B1220" : "#0F1115") + ';">';
+      html += '  <div class="dots"><span class="dot" style="background:' + th.swatch[0] + '"></span><span class="dot" style="background:' + th.swatch[1] + ';border:1px solid #555"></span></div>';
+      html += '  <p class="name" style="color:' + (key === "classic" ? "#241F1A" : "#F5F5F0") + '">' + th.name + '</p>';
+      if (active) html += '  <p class="active-tag" style="color:' + th.swatch[0] + '">Active</p>';
+      html += '</div>';
+    });
+    html += '</div></div>';
+
+    // Layout
+    html += '<div class="section"><h3>📐 Tournament List Layout</h3><div class="format-row">';
+    html += '  <button class="format-btn ' + (s.layout === "grid" ? "active" : "") + '" data-action="set-layout" data-layout="grid">▦ Grid</button>';
+    html += '  <button class="format-btn ' + (s.layout === "list" ? "active" : "") + '" data-action="set-layout" data-layout="list">☰ List</button>';
+    html += '</div></div>';
+
+    // Password
+    html += '<div class="section"><h3>🔑 Admin Password</h3>';
+    html += '  <div class="field"><label>Current Password</label><input class="input" id="pw-current" type="password" /></div>';
+    html += '  <div class="field"><label>New Password</label><input class="input" id="pw-new" type="password" /></div>';
+    html += '  <div class="field"><label>Confirm New Password</label><input class="input" id="pw-confirm" type="password" /></div>';
+    if (state.pwError) html += '  <p class="error-text">' + esc(state.pwError) + '</p>';
+    if (state.pwOk) html += '  <p class="ok-text">' + esc(state.pwOk) + '</p>';
+    html += '  <button class="btn btn-accent" data-action="change-password">Update Password</button>';
+    html += '</div>';
+
+    return html;
+  }
+
+  function renderEditor() {
+    var t = state.editing;
+    var html = '';
+    html += '<button class="back-link" data-action="cancel-editor">⬅ Cancel</button>';
+    html += '<h2 style="margin:0 0 16px;font-size:20px;font-weight:800;">' + (state.isNew ? "New Tournament" : "Edit Tournament") + '</h2>';
+
+    html += '<div class="field"><label>Poster Image</label>';
+    html += '  <label class="img-upload">';
+    if (t.image) html += '<img src="' + esc(t.image) + '" />';
+    else html += '<span class="ph">🖼️</span><span class="ph-text">Upload an image</span>';
+    html += '    <input type="file" id="img-file" accept="image/*" />';
+    html += '  </label>';
+    html += '  <input class="input" id="ed-image-url" placeholder="...or paste an image URL" value="' + (t.image && t.image.indexOf("data:") === 0 ? "" : esc(t.image)) + '" />';
+    html += '</div>';
+
+    html += '<div class="field"><label>Title</label><input class="input" id="ed-title" placeholder="e.g. Friday Night Clash" value="' + esc(t.title) + '" /></div>';
+
+    html += '<div class="row2">';
+    html += '  <div class="field"><label>Game</label><input class="input" id="ed-game" placeholder="e.g. BGMI" value="' + esc(t.game) + '" /></div>';
+    html += '  <div class="field"><label>Format</label><input class="input" id="ed-format" placeholder="e.g. Squad · BR" value="' + esc(t.format) + '" /></div>';
+    html += '</div>';
+
+    html += '<div class="row2">';
+    html += '  <div class="field"><label>Prize Pool</label><input class="input" id="ed-prize" placeholder="e.g. Rs 5,000" value="' + esc(t.prize) + '" /></div>';
+    html += '</div>';
+
+    html += '<div class="field"><label>Description</label><textarea class="input" id="ed-desc" placeholder="Rules, details, anything players should know...">' + esc(t.description) + '</textarea></div>';
+
+    // Mode selector
+    var modes = [
+      { key: "1v1", icon: "🎯", label: "1v1" },
+      { key: "2v2", icon: "👥", label: "2v2" },
+      { key: "4v4", icon: "🛡️", label: "4v4" },
+      { key: "5v5", icon: "⚔️", label: "5v5" },
+      { key: "squad", icon: "🏆", label: "Squad" },
+      { key: "solo", icon: "🦾", label: "Solo" }
+    ];
+    html += '<div class="field"><label>Game Mode</label><div class="mode-grid">';
+    modes.forEach(function(m) {
+      html += '<button class="mode-btn ' + ((t.mode || "4v4") === m.key ? "active" : "") + '" data-action="set-mode" data-mode="' + m.key + '" type="button"><span class="mode-icon">' + m.icon + '</span>' + m.label + '</button>';
+    });
+    html += '</div></div>';
+
+    // Match time
+    html += '<div class="row2">';
+    html += '  <div class="field"><label>Match Time</label><input class="input" id="ed-matchtime" type="time" value="' + esc(t.matchTime || "") + '" /></div>';
+    html += '  <div class="field"><label>Match Date</label><input class="input" id="ed-date" type="date" value="' + esc(t.date) + '" /></div>';
+    html += '</div>';
+
+    html += '<div class="section">';
+    html += '  <div class="toggle-row">';
+    html += '    <div><p class="t">Registration Open</p><p class="s">Players will see the entry number below</p></div>';
+    html += '    <button class="toggle ' + (t.registrationOpen ? "on" : "") + '" data-action="toggle-reg"><span class="knob"></span></button>';
+    html += '  </div>';
+    if (t.registrationOpen) {
+      html += '  <input class="input" id="ed-entry" placeholder="Entry number, e.g. 03278269343 (JazzCash)" value="' + esc(t.entryNumber) + '" />';
+    }
+    html += '</div>';
+
+    // Room ID / Password — admin sets these; revealed to players at match time
+    html += '<div class="section">';
+    html += '  <h3 style="margin-bottom:10px;">🔑 Room ID & Password</h3>';
+    html += '  <p style="font-size:12px;color:var(--sub);margin:0 0 12px;">Set these now — players will only see them once the match time arrives.</p>';
+    html += '  <div class="room-admin-row">';
+    html += '    <div class="field" style="margin:0;"><label>Room ID</label><input class="input" id="ed-roomid" placeholder="e.g. 987654" value="' + esc(t.roomId || "") + '" /></div>';
+    html += '    <div class="field" style="margin:0;"><label>Password</label><input class="input" id="ed-roompass" placeholder="e.g. clash99" value="' + esc(t.roomPass || "") + '" /></div>';
+    html += '  </div>';
+    html += '</div>';
+
+    html += '<button class="btn btn-accent btn-block" data-action="save-tournament">Save Tournament</button>';
+    return html;
+  }
+
+  // ---------- Capture editor field values back into state.editing ----------
+  function captureEditorFields() {
+    if (!state.editing) return;
+    var get = function (id) { var el = document.getElementById(id); return el ? el.value : undefined; };
+    var t = state.editing;
+    var urlVal = get("ed-image-url");
+    if (urlVal !== undefined && urlVal.trim() !== "" ) t.image = urlVal.trim();
+    if (urlVal !== undefined && urlVal.trim() === "" && t.image && t.image.indexOf("data:") !== 0) t.image = "";
+    if (get("ed-title") !== undefined) t.title = get("ed-title");
+    if (get("ed-game") !== undefined) t.game = get("ed-game");
+    if (get("ed-format") !== undefined) t.format = get("ed-format");
+    if (get("ed-date") !== undefined) t.date = get("ed-date");
+    if (get("ed-prize") !== undefined) t.prize = get("ed-prize");
+    if (get("ed-desc") !== undefined) t.description = get("ed-desc");
+    if (get("ed-entry") !== undefined) t.entryNumber = get("ed-entry");
+    if (get("ed-matchtime") !== undefined) t.matchTime = get("ed-matchtime");
+    if (get("ed-roomid") !== undefined) t.roomId = get("ed-roomid");
+    if (get("ed-roompass") !== undefined) t.roomPass = get("ed-roompass");
+  }
+
+  // ---------- Master render ----------
+  function render() {
+    document.body.className = "theme-" + (state.settings.theme || "arena");
+    var app = document.getElementById("app");
+    var html = "";
+    switch (state.view) {
+      case "player": html = renderPlayer(); break;
+      case "detail": html = renderDetail(); break;
+      case "adminLogin": html = renderAdminLogin(); break;
+      case "admin":
+        if (!state.isAdmin) { state.view = "adminLogin"; html = renderAdminLogin(); }
+        else if (state.editing) html = renderEditor();
+        else html = renderAdmin();
+        break;
+      default: html = renderPlayer();
+    }
+    app.innerHTML = html;
+    var pwInput = document.getElementById("pw-input");
+    if (pwInput) pwInput.focus();
+  }
+
+  // ---------- Actions ----------
+  function attemptLogin() {
+    var el = document.getElementById("pw-input");
+    var val = el ? el.value : "";
+    if (val === state.settings.password) {
+      state.isAdmin = true;
+      state.loginError = "";
+      state.view = "admin";
+    } else {
+      state.loginError = "Incorrect password.";
+    }
+    render();
+  }
+
+  function copyToClipboard(text) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).catch(function () {});
+    } else {
+      var ta = document.createElement("textarea");
+      ta.value = text; document.body.appendChild(ta); ta.select();
+      try { document.execCommand("copy"); } catch (e) {}
+      document.body.removeChild(ta);
+    }
+  }
+
+  function saveTournamentFromEditor() {
+    captureEditorFields();
+    var t = state.editing;
+    if (!t.title || !t.title.trim()) { alert("Please enter a tournament title."); return; }
+    if (state.isNew) state.tournaments.unshift(t);
+    else {
+      for (var i = 0; i < state.tournaments.length; i++) if (state.tournaments[i].id === t.id) state.tournaments[i] = t;
+    }
+    persistTournaments();
+    state.editing = null; state.isNew = false;
+    render();
+  }
+
+  function handleFile(file) {
+    if (!file) return;
+    if (file.size > 1.5 * 1024 * 1024) { alert("Please choose an image under ~1.5MB."); return; }
+    var reader = new FileReader();
+    reader.onload = function () {
+      captureEditorFields();
+      state.editing.image = reader.result;
+      render();
+    };
+    reader.readAsDataURL(file);
+  }
+
+  // ---------- Event delegation ----------
+  document.addEventListener("click", function (e) {
+    var el = e.target.closest("[data-action]");
+    if (!el) return;
+    var action = el.getAttribute("data-action");
+
+    switch (action) {
+      case "open-admin-gate":
+        state.view = state.isAdmin ? "admin" : "adminLogin";
+        state.loginError = "";
+        render();
+        break;
+      case "back-to-player":
+        state.view = "player";
+        render();
+        break;
+      case "open-tournament":
+        state.activeId = el.getAttribute("data-id");
+        state.view = "detail";
+        state.regSubmitted = false;
+        state.regError = "";
+        var _t = findTournament(el.getAttribute("data-id"));
+        var _modeHints = { "1v1": 1, "2v2": 2, "4v4": 4, "5v5": 5, "squad": 4, "solo": 1 };
+        state.regPlayerCount = (_t && _t.mode && _modeHints[_t.mode]) ? _modeHints[_t.mode] : 1;
+        render();
+        break;
+      case "toggle-pw":
+        state.showPw = !state.showPw;
+        render();
+        break;
+      case "submit-login":
+        attemptLogin();
+        break;
+      case "view-app":
+        state.view = "player";
+        render();
+        break;
+      case "logout":
+        state.isAdmin = false;
+        state.view = "player";
+        render();
+        break;
+      case "set-tab":
+        state.adminTab = el.getAttribute("data-tab");
+        state.settingsSavedMsg = ""; state.pwError = ""; state.pwOk = "";
+        render();
+        break;
+      case "add-tournament":
+        state.editing = { id: uid(), title: "", game: "", format: "", date: "", prize: "", image: "", description: "", registrationOpen: false, entryNumber: "03278269343 (JazzCash)", matchTime: "", mode: "4v4", roomId: "", roomPass: "" };
+        state.isNew = true;
+        render();
+        break;
+      case "edit-tournament":
+        var found = findTournament(el.getAttribute("data-id"));
+        if (found) { state.editing = JSON.parse(JSON.stringify(found)); state.isNew = false; render(); }
+        break;
+      case "delete-tournament":
+        state.tournaments = state.tournaments.filter(function (x) { return x.id !== el.getAttribute("data-id"); });
+        persistTournaments();
+        render();
+        break;
+      case "cancel-editor":
+        state.editing = null; state.isNew = false;
+        render();
+        break;
+      case "toggle-reg":
+        captureEditorFields();
+        state.editing.registrationOpen = !state.editing.registrationOpen;
+        render();
+        break;
+      case "set-mode":
+        captureEditorFields();
+        state.editing.mode = el.getAttribute("data-mode");
+        render();
+        break;
+      case "save-tournament":
+        saveTournamentFromEditor();
+        break;
+      case "set-theme":
+        state.settings.theme = el.getAttribute("data-theme");
+        persistSettings();
+        render();
+        break;
+      case "set-layout":
+        state.settings.layout = el.getAttribute("data-layout");
+        persistSettings();
+        render();
+        break;
+      case "save-general":
+        state.settings.appName = document.getElementById("set-appname").value || DEFAULT_SETTINGS.appName;
+        state.settings.tagline = document.getElementById("set-tagline").value || "";
+        persistSettings();
+        state.settingsSavedMsg = "Saved.";
+        render();
+        setTimeout(function () { state.settingsSavedMsg = ""; render(); }, 1500);
+        break;
+      case "change-password":
+        var cur = document.getElementById("pw-current").value;
+        var nw = document.getElementById("pw-new").value;
+        var conf = document.getElementById("pw-confirm").value;
+        state.pwOk = ""; state.pwError = "";
+        if (cur !== state.settings.password) state.pwError = "Current password is incorrect.";
+        else if (nw.length < 4) state.pwError = "New password must be at least 4 characters.";
+        else if (nw !== conf) state.pwError = "New passwords don't match.";
+        else {
+          state.settings.password = nw;
+          persistSettings();
+          state.pwOk = "Password updated.";
+        }
+        render();
+        break;
+      case "copy-number":
+        copyToClipboard(el.getAttribute("data-num"));
+        el.textContent = "✅ Copied";
+        setTimeout(function () { el.innerHTML = "📋 Copy"; }, 1500);
+        break;
+      case "copy-room":
+        var rid2 = el.getAttribute("data-roomid"); var rpass = el.getAttribute("data-roompass");
+        copyToClipboard("Room ID: " + rid2 + "\nPassword: " + rpass);
+        el.textContent = "✅ Copied!";
+        setTimeout(function () { el.innerHTML = "📋 Copy Room Info"; }, 1500);
+        break;
+      case "add-player":
+        state.regPlayerCount = (state.regPlayerCount || 1) + 1;
+        render();
+        break;
+      case "remove-player":
+        var removeIdx = parseInt(el.getAttribute("data-idx"), 10);
+        // Gather current player values, remove the one at removeIdx
+        var curCount = state.regPlayerCount || 1;
+        var vals = [];
+        for (var pi = 0; pi < curCount; pi++) {
+          var pel = document.getElementById("reg-player-" + pi);
+          vals.push(pel ? pel.value : "");
+        }
+        vals.splice(removeIdx, 1);
+        state.regPlayerCount = Math.max(1, curCount - 1);
+        render();
+        // Re-fill remaining inputs
+        for (var pj = 0; pj < vals.length; pj++) {
+          var rp = document.getElementById("reg-player-" + pj);
+          if (rp) rp.value = vals[pj];
+        }
+        break;
+      case "submit-reg":
+        submitRegistration(el.getAttribute("data-tid"));
+        break;
+      case "reg-new":
+        state.regSubmitted = false;
+        state.regPlayerCount = 1;
+        state.regError = "";
+        render();
+        break;
+      case "delete-reg":
+        var rid = el.getAttribute("data-rid");
+        state.registrations = state.registrations.filter(function (x) { return x.id !== rid; });
+        persistRegistrations();
+        render();
+        break;
+    }
+  });
+
+  // Enter key submits login
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Enter" && document.getElementById("pw-input")) {
+      e.preventDefault();
+      attemptLogin();
+    }
+  });
+
+  // File input change (event delegation for dynamically added input)
+  document.addEventListener("change", function (e) {
+    if (e.target && e.target.id === "img-file") {
+      handleFile(e.target.files && e.target.files[0]);
+    }
+  });
+
+  // ---------- Init ----------
+  render();
+  loadAll();
+})();
+</script>
+</body>
+</html>
